@@ -1,0 +1,12 @@
+version: '3'
+services:
+    nestjs-demo: # service name
+        volumes: # 相当于docker run -p 82:80 -d -v xxxx:xxxx
+            - '.docker-volumes/pm2/logs:/app/logs' # pm2日志同步，这个地方要注意，要放在第一个属性这，否则centos上无效，但本地有效，好奇怪。
+        build:
+            context: . # 当前目录
+            dockerfile: Dockerfile # 基于 Dockerfile 构建
+        image: nestjs-demo # 依赖于当前 Dockerfile 创建出来的镜像
+        container_name: nestjs-demo
+        ports:
+            - 82:7000 # 宿主机通过 81 访问
