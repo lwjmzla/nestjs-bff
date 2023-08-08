@@ -10,7 +10,7 @@ export class RecordService {
     private readonly httpService: HttpService,
     private configService: ConfigService
   ){
-    this.baseUrl = this.configService.get('msgIns.baseUrl') // ! http://192.168.1.3:19005
+    this.baseUrl = this.configService.get('msgIns.baseUrl') // ! http://cmn-base-msg.svc  =>  http://192.168.1.3:19005
   }
 
   async recordPage(body) {

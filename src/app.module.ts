@@ -5,8 +5,9 @@ import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { AllExceptionsFilter } from './filters/http-exception.filter';
 import { MsgModule } from './modules/msg/msg.module';
 import { HttpServiceInterceptor } from './interceptors/http-service.interceptors';
-import { HttpModule } from '@nestjs/axios';
+import { HttpModule, HttpService } from '@nestjs/axios';
 import { VmpConfigModule } from './config/config.module';
+import { configManager } from './config/nacos.configuration';
 
 @Module({
   imports: [
@@ -31,4 +32,10 @@ import { VmpConfigModule } from './config/config.module';
     },
   ],
 })
-export class AppModule {}
+export class AppModule {
+  constructor(httpService: HttpService) {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    httpService.axiosRef.interceptors.request.use(configManager.axiosRequestInterceptor(/\.svc$/));
+  }
+}

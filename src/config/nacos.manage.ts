@@ -3,6 +3,7 @@ import * as os from 'os';
 import * as nacos from 'nacos';
 import * as dayjs from 'dayjs';
 import * as yaml from 'js-yaml';
+import { AxiosRequestConfig } from "axios";
 
 export class NacosManager {
   private ip: string;
@@ -29,7 +30,6 @@ export class NacosManager {
       username: 'nacos', // !巨坑
       password: 'nacos'
     });
-    const port = 7000
     const logger = console;
     this.namingClient = new nacos.NacosNamingClient({
       // @ts-ignore
@@ -40,6 +40,9 @@ export class NacosManager {
       username: 'nacos', // !巨坑
       password: 'nacos'
     });
+    const content_yaml = await this.client.getConfig(this.DATA_ID, this.GROUP);
+    const content = yaml.load(content_yaml) || {};
+    const port = content.port || 7000
     await this.namingClient.ready();
     // !注册nacos服务，获取当前服务下的实例
     await this.namingClient.registerInstance(this.serviceName, {
@@ -74,30 +77,56 @@ export class NacosManager {
   public async getAllConfig(): Promise<any> {
     const content_yaml = await this.client.getConfig(this.DATA_ID, this.GROUP);
     const content = yaml.load(content_yaml) || {};
-
-    const msgInstances = await this.namingClient.getAllInstances('cmn-base-msg')
-    const sysInstances = await this.namingClient.getAllInstances('cmn-base-sys')
-    const flowInstances = await this.namingClient.getAllInstances('cmn-base-activiti')
-    if (msgInstances?.length) {
-      this.setInsInfo(content, 'msgIns', msgInstances)
-    }
-    if (sysInstances?.length) {
-      this.setInsInfo(content, 'sysIns', sysInstances)
-    }
-    if (flowInstances?.length) {
-      this.setInsInfo(content, 'flowIns', flowInstances)
-    }
+    
+    await this.setInsInfo('cmn-base-msg', content)
+    await this.setInsInfo('cmn-base-sys', content)
+    await this.setInsInfo('cmn-base-activiti', content)
     console.log(content)
     return content;
   }
 
-  //
-  private setInsInfo(content, insType, instances: {ip: string, port: number}[]) {
-    content[insType] = {
-      ip: instances[0].ip,
-      port: instances[0].port,
-      baseUrl: 'http://' + instances[0].ip + ':' + instances[0].port,
+  async setInsInfo(serviceName: string, content: Record<string, any>) {
+    const instances = await this.namingClient.getAllInstances(serviceName)
+    if (instances?.length) {
+      const insType = serviceName.replace('cmn-base-', '') + 'Ins'
+      content[insType] = {
+        baseUrl: `http://${serviceName}.svc` 
+      }
     }
-    return content
+  }
+
+  async selectOneHealthyInstance(serviceName: string, groupName?: string, clusters?: string) {
+    const instances = await this.namingClient.selectInstances(serviceName, groupName, clusters, true);
+    let totalWeight = 0;
+    for (const instance of instances) {
+        totalWeight += instance.weight;
+    }
+    let pos = Math.random() * totalWeight;
+    for (const instance of instances) {
+        if (instance.weight) {
+            pos -= instance.weight;
+            if (pos <= 0) {
+                return instance
+            }
+        }
+    }
+    throw new Error(`Not found healthy service ${serviceName}!`);
+  }
+
+  axiosRequestInterceptor(matchReg: RegExp) {
+    return async (config: AxiosRequestConfig) => {
+      console.log(config.url)
+        const results = /(?<=:\/\/)[a-zA-Z\.\-_0-9]+(?=\/|$)/.exec(config.url);
+        if (results && results.length) {
+            const serviceName = results[0];
+            if (matchReg.test(serviceName)) {
+              const realServiceName = serviceName.split('.')[0]
+              const service = await this.selectOneHealthyInstance(realServiceName);
+              config.url = config.url.replace(serviceName, `${service.ip}:${service.port}`);
+              console.log(config.url)
+            }
+        }
+        return config;
+    };
   }
 }
