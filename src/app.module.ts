@@ -36,6 +36,6 @@ export class AppModule {
   constructor(httpService: HttpService) {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
-    httpService.axiosRef.interceptors.request.use(configManager.axiosRequestInterceptor(/\.svc$/));
+    httpService.axiosRef.interceptors.request.use(configManager.axiosRequestInterceptor(new RegExp('^cmn-base-')));
   }
 }

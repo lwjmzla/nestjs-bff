@@ -90,7 +90,7 @@ export class NacosManager {
     if (instances?.length) {
       const insType = serviceName.replace('cmn-base-', '') + 'Ins'
       content[insType] = {
-        baseUrl: `http://${serviceName}.svc` 
+        baseUrl: `http://${serviceName}` 
       }
     }
   }
@@ -120,8 +120,8 @@ export class NacosManager {
         if (results && results.length) {
             const serviceName = results[0];
             if (matchReg.test(serviceName)) {
-              const realServiceName = serviceName.split('.')[0]
-              const service = await this.selectOneHealthyInstance(realServiceName);
+              //const realServiceName = serviceName.split('.')[0]
+              const service = await this.selectOneHealthyInstance(serviceName);
               config.url = config.url.replace(serviceName, `${service.ip}:${service.port}`);
               console.log(config.url)
             }
