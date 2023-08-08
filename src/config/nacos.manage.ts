@@ -8,6 +8,7 @@ export class NacosManager {
   private ip: string;
   private client: any;
   private namingClient;
+  private serviceName = 'cmn-base-bff'
   private DATA_ID = 'cmn-sys-bff-test.yml';
   private GROUP = 'DEFAULT_GROUP';
   private NAMESPACE = 'test';
@@ -19,6 +20,7 @@ export class NacosManager {
   }
 
   private async getClient(): Promise<void> {
+    // !获取nacos配置用
     this.client = new nacos.NacosConfigClient({
       serverAddr: this.NACOS_ADDRESS,
       namespace: this.NAMESPACE,
@@ -30,7 +32,8 @@ export class NacosManager {
     const port = 7000
     const logger = console;
     this.namingClient = new nacos.NacosNamingClient({
-      logger,
+      // @ts-ignore
+      logger: { info: () => '', debug: () => '' },
       serverList: this.NACOS_ADDRESS,
       namespace: this.NAMESPACE,
       // @ts-ignore
@@ -38,15 +41,14 @@ export class NacosManager {
       password: 'nacos'
     });
     await this.namingClient.ready();
-    // 注册nacos服务
-    await this.namingClient.registerInstance('cmn-base-bff', {
+    // !注册nacos服务，获取当前服务下的实例
+    await this.namingClient.registerInstance(this.serviceName, {
       ip: this.ip,
       port,
-      // // @ts-ignore
-      // metadata: {
-      //   'preserved.register.source': 'node-bff',
-      //   'startup.time': dayjs(new Date()).format('YYYY-MM-DD HH:mm:ss'),
-      // },
+      metadata: {
+        componentName: 'node-bff',
+        address: `${this.ip}:${port}`
+      }
     });
     console.log(`[Nacos] Nacos服务实例注册成功: ${this.ip}:${port}`);
   }
@@ -71,10 +73,31 @@ export class NacosManager {
 
   public async getAllConfig(): Promise<any> {
     const content_yaml = await this.client.getConfig(this.DATA_ID, this.GROUP);
-    const content = yaml.load(content_yaml);
+    const content = yaml.load(content_yaml) || {};
+
+    const msgInstances = await this.namingClient.getAllInstances('cmn-base-msg')
+    const sysInstances = await this.namingClient.getAllInstances('cmn-base-sys')
+    const flowInstances = await this.namingClient.getAllInstances('cmn-base-activiti')
+    if (msgInstances?.length) {
+      this.setInsInfo(content, 'msgIns', msgInstances)
+    }
+    if (sysInstances?.length) {
+      this.setInsInfo(content, 'sysIns', sysInstances)
+    }
+    if (flowInstances?.length) {
+      this.setInsInfo(content, 'flowIns', flowInstances)
+    }
     console.log(content)
-    const allInstances = await this.namingClient.getAllInstances('cmn-base-bff')
-    console.log(allInstances)
     return content;
+  }
+
+  //
+  private setInsInfo(content, insType, instances: {ip: string, port: number}[]) {
+    content[insType] = {
+      ip: instances[0].ip,
+      port: instances[0].port,
+      baseUrl: 'http://' + instances[0].ip + ':' + instances[0].port,
+    }
+    return content
   }
 }
