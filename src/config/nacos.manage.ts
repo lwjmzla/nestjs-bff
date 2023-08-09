@@ -1,19 +1,20 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import * as os from 'os';
 import * as nacos from 'nacos';
-import * as dayjs from 'dayjs';
 import * as yaml from 'js-yaml';
 import { AxiosRequestConfig } from "axios";
+import { getDotenvObj } from './dotenv';
+const dotenvObj = getDotenvObj()
 
 export class NacosManager {
   private ip: string;
   private client: any;
   private namingClient;
-  private serviceName = 'cmn-base-bff'
-  private DATA_ID = 'cmn-sys-bff-test.yml';
-  private GROUP = 'DEFAULT_GROUP';
-  private NAMESPACE = 'test';
-  private NACOS_ADDRESS = '192.168.1.210:8848';
+  private serviceName = process.env.NACOS_SERVICENAME
+  private DATA_ID = process.env.NACOS_DATA_ID;
+  private GROUP = process.env.NACOS_GROUP;
+  private NACOS_NAMESPACE = process.env.NACOS_NAMESPACE;
+  private NACOS_ADDRESS = process.env.NACOS_ADDRESS;
 
   constructor() {
     this.getClient();
@@ -24,21 +25,21 @@ export class NacosManager {
     // !获取nacos配置用
     this.client = new nacos.NacosConfigClient({
       serverAddr: this.NACOS_ADDRESS,
-      namespace: this.NAMESPACE,
+      namespace: this.NACOS_NAMESPACE,
       requestTimeout: 6000,
       // @ts-ignore
-      username: 'nacos', // !巨坑
-      password: 'nacos'
+      username: process.env.NACOS_USERNAME, // !巨坑
+      password: process.env.NACOS_PASSWORD
     });
     const logger = console;
     this.namingClient = new nacos.NacosNamingClient({
       // @ts-ignore
-      logger: { info: () => '', debug: () => '' },
+      logger: { info: () => '', debug: () => '', warn: () => '' },
       serverList: this.NACOS_ADDRESS,
-      namespace: this.NAMESPACE,
+      namespace: this.NACOS_NAMESPACE,
       // @ts-ignore
-      username: 'nacos', // !巨坑
-      password: 'nacos'
+      username: process.env.NACOS_USERNAME,
+      password: process.env.NACOS_PASSWORD
     });
     const content_yaml = await this.client.getConfig(this.DATA_ID, this.GROUP);
     const content = yaml.load(content_yaml) || {};
@@ -76,11 +77,12 @@ export class NacosManager {
 
   public async getAllConfig(): Promise<any> {
     const content_yaml = await this.client.getConfig(this.DATA_ID, this.GROUP);
-    const content = yaml.load(content_yaml) || {};
+    let content = yaml.load(content_yaml) || {};
     
     await this.setInsInfo('cmn-base-msg', content)
     await this.setInsInfo('cmn-base-sys', content)
     await this.setInsInfo('cmn-base-activiti', content)
+    content = { ...content, ...dotenvObj }
     console.log(content)
     return content;
   }
