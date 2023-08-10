@@ -6,7 +6,7 @@ import {
   HttpException,
 } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
-import { catchError, Observable } from 'rxjs';
+import { catchError, Observable, tap } from 'rxjs';
 
 @Injectable()
 export class HttpServiceInterceptor implements NestInterceptor {
@@ -19,10 +19,15 @@ export class HttpServiceInterceptor implements NestInterceptor {
       // console.log(headers.usertoken)
       this.httpService.axiosRef.defaults.headers.common['userToken'] = headers.usertoken;
     }
-    return next.handle().pipe(
-      catchError((e) => {
-        throw new HttpException(e.response.statusText, e.response.status);
-      }),
-    );
+    // return next.handle().pipe(
+    //   catchError((e) => {
+    //     throw new HttpException(e.response.statusText, e.response.status); // !这种改变了报错的Exception类型
+    //   }),
+    // );
+    return next
+      .handle()
+      .pipe(
+        tap(() => console.log(`After...`)),
+      );
   }
 }

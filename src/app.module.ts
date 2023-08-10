@@ -1,10 +1,10 @@
-import { Module } from '@nestjs/common';
+import { Module, ValidationPipe } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { LogsModule } from './logs/logs.module';
-import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
-import { AllExceptionsFilter } from './filters/http-exception.filter';
+import { APP_FILTER, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
+import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 import { MsgModule } from './modules/msg/msg.module';
-import { HttpServiceInterceptor } from './interceptors/http-service.interceptors';
+import { HttpServiceInterceptor } from './common/interceptors/http-service.interceptors';
 import { HttpModule, HttpService } from '@nestjs/axios';
 import { VmpConfigModule } from './config/config.module';
 import { configManager } from './config/nacos.configuration';
@@ -30,6 +30,16 @@ import { configManager } from './config/nacos.configuration';
       provide: APP_INTERCEPTOR,
       useClass: HttpServiceInterceptor,
     },
+    {
+			provide: APP_PIPE,
+			useValue: new ValidationPipe({
+				// transform: true,
+				// errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY,
+				// whitelist: true, //!去除在类上不存在的字段。
+				// forbidNonWhitelisted: true,
+				// forbidUnknownValues: true,
+			}),
+		},
   ],
 })
 export class AppModule {

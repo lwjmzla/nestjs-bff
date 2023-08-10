@@ -45,7 +45,7 @@ export class NacosManager {
     const content = yaml.load(content_yaml) || {};
     const port = content.port || 7000
     await this.namingClient.ready();
-    // !注册nacos服务，获取当前服务下的实例
+    // !注册nacos服务，获取服务下的实例
     await this.namingClient.registerInstance(this.serviceName, {
       ip: this.ip,
       port,
