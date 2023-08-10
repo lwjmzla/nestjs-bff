@@ -1,6 +1,6 @@
 import { Body, Controller, Post, Headers } from '@nestjs/common';
 import { RecordService } from './record.service';
-import { ApiBadRequestResponse, ApiOkResponse, ApiOperation } from '@nestjs/swagger';
+import { ApiOkResponse, ApiOperation } from '@nestjs/swagger';
 import { RecordInfoDto } from './record.dto';
 import { RecordInfoPage } from './record.class';
 

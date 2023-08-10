@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { IsNotEmpty, IsNumber, IsString } from "class-validator";
+import { IsString } from "class-validator";
 import { PageOptionsDto } from "src/common/dto/page.dto";
 
 export class RecordInfoDto extends PageOptionsDto{

@@ -1,5 +1,4 @@
 import { Module, ValidationPipe } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
 import { LogsModule } from './logs/logs.module';
 import { APP_FILTER, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
@@ -13,10 +12,6 @@ import { configManager } from './config/nacos.configuration';
   imports: [
     VmpConfigModule,
     HttpModule,
-    // ConfigModule.forRoot({
-    //   isGlobal: true,
-    //   load: [() => ({})], // !todo nacos获取配置信息  
-    // }),
     LogsModule,
     MsgModule,
   ],
