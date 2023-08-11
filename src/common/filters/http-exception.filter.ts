@@ -8,10 +8,13 @@ import {
   Inject,
   BadRequestException,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { HttpAdapterHost } from '@nestjs/core';
 import * as requestIp from 'request-ip';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+import { Request, Response } from 'express';
+import { ResponseDto } from '../class/res.class';
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
@@ -26,8 +29,8 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const { httpAdapter } = this.httpAdapterHost;
 
     const ctx = host.switchToHttp();
-    const request = ctx.getRequest()
-    const response = ctx.getResponse()
+    const response = ctx.getResponse<Response>();
+    const request = ctx.getRequest<Request>();
 
     const httpStatus = exception instanceof HttpException ? exception.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR;
 
@@ -43,12 +46,14 @@ export class AllExceptionsFilter implements ExceptionFilter {
     }
 
     if (exception instanceof BadRequestException) {
-      if (msg?.message?.length) {
+      if (typeof msg?.message === 'string') {
+        msg = msg?.message
+      } else {
         msg = msg?.message[0]
       }
     }
 
-    if (exception instanceof NotFoundException) {
+    if (exception instanceof NotFoundException || exception instanceof UnauthorizedException) {
       msg = msg?.message || msg
     }
 
@@ -72,12 +77,12 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
     this.logger.error('[AllExceptionsFilter]', responseLog)
 
-    const responseBody = {
+    const responseBody = new ResponseDto({
       code: httpStatus,
       data: null,
       msg,
       success: false
-    }
+    })
     
     httpAdapter.reply(response, responseBody, httpStatus);
   }

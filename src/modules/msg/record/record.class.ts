@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { PageResponseOptionsDto } from "src/common/dto/pageResponse.dto";
+import { PageResponseOptionsDto } from "src/common/class/pageResponse.class";
 
 class RecordInfo {
   @ApiProperty({ description: '模版名称' })
