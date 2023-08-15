@@ -4,6 +4,7 @@ import { ApiOkResponse, ApiOperation } from '@nestjs/swagger';
 import { RecordInfoDto } from './record.dto';
 import { RecordInfoPage } from './record.class';
 import { Keep } from 'src/common/decorators/keep.decorator';
+import { Public } from 'src/common/decorators/public.decorator';
 
 @Controller('msg/record')
 export class RecordController {
@@ -20,6 +21,7 @@ export class RecordController {
     return this.recordService.recordPage(dto);
   }
 
+  //@Public()
   @Get()
   getPage(@Query() dto) {
     return [{ name: 'lwj' }]

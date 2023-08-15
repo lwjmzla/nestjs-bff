@@ -25,11 +25,11 @@ export class HttpServiceInterceptor implements NestInterceptor {
         tap(() => console.log(`After...`)),
         map((data) => {
           //console.log('map', data)
-          const keep = this.reflector.get<boolean>(
+          const isKeep = this.reflector.get<boolean>(
             TRANSFORM_KEEP_KEY_METADATA,
             context.getHandler(),
           );
-          if (keep) { // !直接转发后端接口使用@Keep()
+          if (isKeep) { // !直接转发后端接口使用@Keep()
             return data;
           } else {
             //const response = context.switchToHttp().getResponse<FastifyReply>();

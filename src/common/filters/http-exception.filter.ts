@@ -9,6 +9,7 @@ import {
   BadRequestException,
   NotFoundException,
   UnauthorizedException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { HttpAdapterHost } from '@nestjs/core';
 import * as requestIp from 'request-ip';
@@ -53,7 +54,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       }
     }
 
-    if (exception instanceof NotFoundException || exception instanceof UnauthorizedException) {
+    if (exception instanceof NotFoundException || exception instanceof UnauthorizedException || exception instanceof ForbiddenException) {
       msg = msg?.message || msg
     }
 
